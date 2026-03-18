@@ -13,24 +13,13 @@
   <p id="result"></p>
 
   <script>
-    async function fetchScore(targetUrl) {
-      const res = await fetch("https://YOUR_BASE_URL/v1/scrape-score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          targetUrl,
-          action: "full_scan"
-        })
-      })
-
-      if (!res.ok) {
-        throw { status: res.status }
+      async function fetchScore(targetUrl) {
+  return {
+    score: Math.floor(Math.random() * 100),
+    grade: "A",
+    target: "https://example.com"
+  }
       }
-
-      return await res.json()
-    }
 
     function getState(score) {
       if (score >= 70) return "GREEN"
