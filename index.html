@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Orivon Client</title>
+</head>
+<body>
+
+  <h2>Orivon Scanner</h2>
+
+  <input id="input" placeholder="Enter URL or ENS" />
+  <button id="searchBtn">Scan</button>
+
+  <p id="result"></p>
+
+  <script>
+    async function fetchScore(targetUrl) {
+      const res = await fetch("https://YOUR_BASE_URL/v1/scrape-score", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          targetUrl,
+          action: "full_scan"
+        })
+      })
+
+      if (!res.ok) {
+        throw { status: res.status }
+      }
+
+      return await res.json()
+    }
+
+    function getState(score) {
+      if (score >= 70) return "GREEN"
+      if (score >= 40) return "AMBER"
+      return "RED"
+    }
+
+    function showMessage(msg) {
+      document.getElementById("result").innerText = msg
+    }
+
+    function updateUI(data) {
+      document.getElementById("result").innerText =
+        `Score: ${data.score} | Grade: ${data.grade} | State: ${data.state}`
+    }
+
+    function handleError(status) {
+      if (status === 401) showMessage("Auth error")
+      else if (status === 403) showMessage("Blocked")
+      else if (status === 429) showMessage("Rate limited")
+      else showMessage("Error")
+    }
+
+    async function handleInput(input) {
+      try {
+        const data = await fetchScore(input)
+
+        const state = getState(data.score)
+
+        updateUI({
+          score: data.score,
+          grade: data.grade,
+          state
+        })
+
+        if (data.target) {
+          window.location.href = data.target
+        }
+
+      } catch (err) {
+        handleError(err.status)
+      }
+    }
+
+    document.getElementById("searchBtn").onclick = () => {
+      const input = document.getElementById("input").value
+      handleInput(input)
+    }
+  </script>
+
+</body>
+</html>
