@@ -44,30 +44,18 @@
     }
 
     async function handleInput(input) {
-      try {
-        const data = await fetchScore(input)
+  const data = await fetchScore(input)
 
-        const state = getState(data.score)
+  const state = getState(data.score)
 
-        updateUI({
-          score: data.score,
-          grade: data.grade,
-          state
-        })
+  document.getElementById("result").innerText =
+    `Score: ${data.score} | Grade: ${data.grade} | State: ${state}`
+}
 
-        if (data.target) {
-          window.location.href = data.target
-        }
-
-      } catch (err) {
-        handleError(err.status)
-      }
-    }
-
-    document.getElementById("searchBtn").onclick = () => {
-      const input = document.getElementById("input").value
-      handleInput(input)
-    }
+    document.getElementById("searchBtn").onclick = async () => {
+  const input = document.getElementById("input").value
+  await handleInput(input)
+}
   </script>
 
 </body>
