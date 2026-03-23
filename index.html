@@ -13,50 +13,68 @@
   <p id="result"></p>
 
   <script>
-      async function fetchScore(targetUrl) {
-  return {
-    score: Math.floor(Math.random() * 100),
-    grade: "A",
-    target: "https://example.com"
+  function showMessage(msg) {
+    document.getElementById("result").innerText = msg
   }
-      }
 
-    function getState(score) {
-      if (score >= 70) return "GREEN"
-      if (score >= 40) return "AMBER"
-      return "RED"
+  function handleError(status) {
+    if (status === 401) showMessage("Auth error")
+    else if (status === 403) showMessage("Blocked by security layer")
+    else if (status === 409) showMessage("Replay detected")
+    else if (status === 429) showMessage("Rate limited")
+    else showMessage("Error")
+  }
+
+  async function fetchScore(targetUrl) {
+    const body = {
+      targetUrl,
+      action: "full_scan"
     }
 
-    function showMessage(msg) {
-      document.getElementById("result").innerText = msg
+    const res = await fetch("https://YOUR_BASE_URL/v1/scrape-score", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-zgap-key-id": "YOUR_KEY_ID",
+        "x-zgap-timestamp": "YOUR_TIMESTAMP",
+        "x-zgap-nonce": "YOUR_NONCE",
+        "x-zgap-payload-sha256": "YOUR_BODY_HASH",
+        "x-zgap-signature": "YOUR_SIGNATURE"
+      },
+      body: JSON.stringify(body)
+    })
+
+    if (!res.ok) {
+      throw { status: res.status }
     }
 
-    function updateUI(data) {
+    return await res.json()
+  }
+
+  function getState(score) {
+    if (score >= 70) return "GREEN"
+    if (score >= 40) return "AMBER"
+    return "RED"
+  }
+
+  async function handleInput(input) {
+    try {
+      const data = await fetchScore(input)
+
+      const state = getState(data.score)
+
       document.getElementById("result").innerText =
-        `Score: ${data.score} | Grade: ${data.grade} | State: ${data.state}`
+        `Score: ${data.score} | Grade: ${data.grade} | State: ${state}`
+    } catch (err) {
+      handleError(err.status)
     }
+  }
 
-    function handleError(status) {
-      if (status === 401) showMessage("Auth error")
-      else if (status === 403) showMessage("Blocked")
-      else if (status === 429) showMessage("Rate limited")
-      else showMessage("Error")
-    }
-
-    async function handleInput(input) {
-  const data = await fetchScore(input)
-
-  const state = getState(data.score)
-
-  document.getElementById("result").innerText =
-    `Score: ${data.score} | Grade: ${data.grade} | State: ${state}`
-}
-
-    document.getElementById("searchBtn").onclick = async () => {
-  const input = document.getElementById("input").value
-  await handleInput(input)
-}
-  </script>
+  document.getElementById("searchBtn").onclick = async () => {
+    const input = document.getElementById("input").value
+    await handleInput(input)
+  }
+</script>
 
 </body>
 </html>
