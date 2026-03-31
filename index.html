@@ -7,74 +7,77 @@
 
   <h2>Orivon Scanner</h2>
 
-  <input id="input" placeholder="Enter URL or ENS" />
+  <input id="input" placeholder="Try: uniswap.org or scam-airdrop.xyz">
   <button id="searchBtn">Scan</button>
 
   <p id="result"></p>
 
   <script>
-  function showMessage(msg) {
-    document.getElementById("result").innerText = msg
-  }
-
-  function handleError(status) {
-    if (status === 401) showMessage("Auth error")
-    else if (status === 403) showMessage("Blocked by security layer")
-    else if (status === 409) showMessage("Replay detected")
-    else if (status === 429) showMessage("Rate limited")
-    else showMessage("Error")
-  }
-
-  async function fetchScore(targetUrl) {
-    const body = {
-      targetUrl,
-      action: "full_scan"
+    function showMessage(msg) {
+      document.getElementById("result").innerText = msg
     }
 
-    const res = await fetch("https://YOUR_BASE_URL/v1/scrape-score", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-zgap-key-id": "YOUR_KEY_ID",
-        "x-zgap-timestamp": "YOUR_TIMESTAMP",
-        "x-zgap-nonce": "YOUR_NONCE",
-        "x-zgap-payload-sha256": "YOUR_BODY_HASH",
-        "x-zgap-signature": "YOUR_SIGNATURE"
-      },
-      body: JSON.stringify(body)
-    })
-
-    if (!res.ok) {
-      throw { status: res.status }
+    function handleError(status) {
+      if (status === 401) showMessage("Auth error")
+      else if (status === 403) showMessage("Blocked by security layer")
+      else if (status === 409) showMessage("Replay detected")
+      else if (status === 429) showMessage("Rate limited")
+      else showMessage("Error")
     }
 
-    return await res.json()
-  }
+    async function fetchScore(targetUrl) {
+      targetUrl = targetUrl.toLowerCase()
 
-  function getState(score) {
-    if (score >= 70) return "GREEN"
-    if (score >= 40) return "AMBER"
-    return "RED"
-  }
+      if (targetUrl.includes("uniswap") || targetUrl.includes("aave")) {
+        return {
+          score: 85,
+          grade: "A",
+          reason: "Known trusted protocol"
+        }
+      }
 
-  async function handleInput(input) {
-    try {
-      const data = await fetchScore(input)
+      if (targetUrl.includes("scam") || targetUrl.includes("free") || targetUrl.includes("airdrop")) {
+        return {
+          score: 20,
+          grade: "F",
+          reason: "Suspicious patterns detected"
+        }
+      }
 
-      const state = getState(data.score)
-
-      document.getElementById("result").innerText =
-        `Score: ${data.score} | Grade: ${data.grade} | State: ${state}`
-    } catch (err) {
-      handleError(err.status)
+      return {
+        score: 55,
+        grade: "C",
+        reason: "Unknown domain — proceed with caution"
+      }
     }
-  }
 
-  document.getElementById("searchBtn").onclick = async () => {
-    const input = document.getElementById("input").value
-    await handleInput(input)
-  }
-</script>
+    function getState(score) {
+      if (score >= 70) return "GREEN"
+      if (score >= 40) return "AMBER"
+      return "RED"
+    }
+
+    async function handleInput(input) {
+      try {
+        const data = await fetchScore(input)
+        const state = getState(data.score)
+
+        const el = document.getElementById("result")
+        el.innerText = `${state} | Score: ${data.score} | ${data.reason}`
+
+        if (state === "GREEN") el.style.color = "green"
+        if (state === "AMBER") el.style.color = "orange"
+        if (state === "RED") el.style.color = "red"
+      } catch (err) {
+        handleError(err.status)
+      }
+    }
+
+    document.getElementById("searchBtn").onclick = async () => {
+      const input = document.getElementById("input").value
+      await handleInput(input)
+    }
+  </script>
 
 </body>
 </html>
